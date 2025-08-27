@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Solar Sizer Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<!-- BRANDING FORM -->
+<div id="branding-section" class="min-h-screen flex items-center justify-center">
+  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <h2 class="text-2xl font-bold mb-4 text-center text-green-700">🔒 Access Solar Sizer Pro</h2>
+    <p class="text-center text-sm text-gray-500 mb-4">Enter company info to continue</p>
+    <input id="companyName" type="text" placeholder="Company Name" class="w-full p-2 mb-3 border rounded">
+    <input id="country" type="text" placeholder="Country" class="w-full p-2 mb-3 border rounded">
+    <input id="contact" type="text" placeholder="Phone or Email" class="w-full p-2 mb-3 border rounded">
+    <input id="companyLogo" type="file" accept="image/*" class="w-full mb-4">
+    <button onclick="showCalculator()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Continue</button>
+  </div>
+</div>
+
+<!-- MAIN CALCULATOR -->
+<div id="calculator-section" style="display:none;">
+  <header class="bg-white shadow-md">
+    <div class="container mx-auto px-6 py-4 text-center">
+      <div id="brandingDisplay" class="mb-2"></div>
+      <h1 class="text-3xl font-bold text-gray-800">☀️ Solar Sizer Pro</h1>
+      <p class="text-gray-600">Technician's Tool for Accurate PV System Sizing</p>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+      <!-- Left Section -->
+      <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-lg">
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">Step 1: Load Calculation</h2>
+          <div id="appliance-list"></div>
+          <button id="add-appliance-btn" class="mt-4 bg-blue-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-600">+ Add Appliance</button>
+        </div>
+
+        <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">Step 2: System Configuration</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block mb-1 text-sm font-medium text-gray-700">System Voltage</label>
+            <select id="system-voltage" class="w-full p-2 border rounded bg-white">
+              <option value="12">12V</option>
+              <option value="24">24V</option>
+              <option value="48" selected>48V</option>
+            </select>
+          </div>
+          <div>
+            <label class="block mb-1 text-sm font-medium text-gray-700">Peak Sun Hours</label>
+            <input type="number" id="psh" class="w-full p-2 border rounded" placeholder="e.g. 5.5" value="5.5">
+          </div>
+          <div>
+            <label class="block mb-1 text-sm font-medium text-gray-700">Autonomy (Days)</label>
+            <input type="number" id="autonomy" class="w-full p-2 border rounded" placeholder="e.g. 1.5" value="1.5">
+          </div>
+          <div>
+            <label class="block mb-1 text-sm font-medium text-gray-700">Battery Type</label>
+            <select id="battery-type" class="w-full p-2 border rounded bg-white">
+              <option value="lead-acid">Lead-Acid</option>
+              <option value="lithium" selected>Lithium</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Section -->
+      <div class="md:col-span-1">
+        <div class="bg-white p-6 rounded-lg shadow-lg sticky top-6">
+          <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">Summary</h2>
+          <div class="flex justify-between mb-2">
+            <span class="text-gray-600">Total Load:</span>
+            <span id="total-peak-load" class="font-bold text-gray-800">0 W</span>
+          </div>
+          <div class="flex justify-between mb-6">
+            <span class="text-gray-600">Daily Energy:</span>
+            <span id="total-daily-energy" class="font-bold text-gray-800">0 Wh</span>
+          </div>
+          <button id="calculate-btn" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded hover:bg-green-700">Calculate System Size</button>
+
+          <div id="results-section" class="mt-6 hidden">
+            <h3 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-3">System Requirements</h3>
+            <p><strong>Inverter:</strong> <span id="inverter-result"></span></p>
+            <p><strong>Battery Bank:</strong> <span id="battery-result"></span></p>
+            <p><strong>Solar Array:</strong> <span id="pv-result"></span></p>
+            <p><strong>Charge Controller:</strong> <span id="controller-result"></span></p>
+
+            <h3 class="text-lg font-semibold text-gray-700 border-b pb-2 mt-4 mb-3">Cable Sizing</h3>
+            <p><strong>Panel → Controller:</strong> <span id="cable1"></span></p>
+            <p><strong>Controller → Battery:</strong> <span id="cable2"></span></p>
+            <p><strong>Battery → Inverter:</strong> <span id="cable3"></span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+function showCalculator() {
+  const name = document.getElementById("companyName").value;
+  const country = document.getElementById("country").value;
+  const contact = document.getElementById("contact").value;
+  const logo = document.getElementById("companyLogo");
+  if (!name || !contact) return alert("Please enter company name and contact.");
+
+  let displayHTML = `<h2 class="text-xl font-bold text-green-800">${name}</h2><p class="text-gray-500">${country} | ${contact}</p>`;
+  if (logo.files.length) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      displayHTML = `<img src="${e.target.result}" class="mx-auto mb-2 h-16">` + displayHTML;
+      document.getElementById("brandingDisplay").innerHTML = displayHTML;
+    };
+    reader.readAsDataURL(logo.files[0]);
+  } else {
+    document.getElementById("brandingDisplay").innerHTML = displayHTML;
+  }
+
+  document.getElementById("branding-section").style.display = "none";
+  document.getElementById("calculator-section").style.display = "block";
+}
+
+// Appliance Entry Logic
+document.addEventListener('DOMContentLoaded', () => {
+  const applianceList = document.getElementById('appliance-list');
+  const addBtn = document.getElementById('add-appliance-btn');
+  const calcBtn = document.getElementById('calculate-btn');
+  const results = document.getElementById('results-section');
+
+  function addRow() {
+    const row = document.createElement('div');
+    row.className = 'grid grid-cols-2 md:grid-cols-5 gap-2 mb-3 appliance-row';
+    row.innerHTML = `
+      <input type="text" placeholder="e.g. LED Bulb" class="p-2 border rounded name">
+      <input type="number" placeholder="Watts" class="p-2 border rounded watts">
+      <input type="number" placeholder="Qty" class="p-2 border rounded qty">
+      <input type="number" placeholder="Hours" class="p-2 border rounded hours">
+      <button class="remove-btn text-red-600 font-bold">❌</button>`;
+    applianceList.appendChild(row);
+  }
+
+  addBtn.onclick = () => addRow();
+  applianceList.onclick = e => {
+    if (e.target.classList.contains('remove-btn')) {
+      e.target.parentElement.remove();
+      updateSummary();
+    }
+  };
+  applianceList.oninput = updateSummary;
+
+  function updateSummary() {
+    let peak = 0, daily = 0;
+    document.querySelectorAll('.appliance-row').forEach(row => {
+      const w = +row.querySelector('.watts').value || 0;
+      const q = +row.querySelector('.qty').value || 0;
+      const h = +row.querySelector('.hours').value || 0;
+      peak += w * q;
+      daily += w * q * h;
+    });
+    document.getElementById('total-peak-load').textContent = peak + ' W';
+    document.getElementById('total-daily-energy').textContent = daily + ' Wh';
+  }
+
+  calcBtn.onclick = () => {
+    const voltage = +document.getElementById('system-voltage').value;
+    const psh = +document.getElementById('psh').value;
+    const autonomy = +document.getElementById('autonomy').value;
+    const batteryType = document.getElementById('battery-type').value;
+    const dod = batteryType === 'lithium' ? 0.9 : 0.5;
+
+    let peak = 0, daily = 0;
+    document.querySelectorAll('.appliance-row').forEach(row => {
+      const w = +row.querySelector('.watts').value || 0;
+      const q = +row.querySelector('.qty').value || 0;
+      const h = +row.querySelector('.hours').value || 0;
+      peak += w * q;
+      daily += w * q * h;
+    });
+
+    const inverter = Math.ceil(peak * 1.25);
+    const batteryAh = Math.ceil((daily * autonomy) / (voltage * dod));
+    const pvSize = Math.ceil(daily / (psh * 0.85));
+    const controller = Math.ceil(pvSize / voltage * 1.25);
+
+    document.getElementById('inverter-result').textContent = inverter + ' W';
+    document.getElementById('battery-result').textContent = batteryAh + ' Ah @ ' + voltage + 'V';
+    document.getElementById('pv-result').textContent = pvSize + ' W';
+    document.getElementById('controller-result').textContent = controller + ' A MPPT';
+
+    // Cable sizing
+    const resistivity = 0.0172, dropPercent = 0.03, dropV = voltage * dropPercent;
+    const panelCurrent = pvSize / voltage;
+    const inverterCurrent = inverter / voltage;
+
+    const dist1 = 15, dist2 = 2, dist3 = 1.5;
+    const area1 = (2 * dist1 * panelCurrent * resistivity) / dropV;
+    const area2 = (2 * dist2 * panelCurrent * resistivity) / dropV;
+    const area3 = (2 * dist3 * inverterCurrent * resistivity) / dropV;
+
+    function roundSize(a) {
+      const std = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70];
+      return std.find(s => s >= a) || '>70';
+    }
+
+    document.getElementById('cable1').textContent = roundSize(area1) + ' mm²';
+    document.getElementById('cable2').textContent = roundSize(area2) + ' mm²';
+    document.getElementById('cable3').textContent = roundSize(area3) + ' mm²';
+
+    results.classList.remove('hidden');
+  };
+
+  addRow();
+});
+</script>
+
+</body>
+</html>
